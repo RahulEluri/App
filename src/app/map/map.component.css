@@ -1,0 +1,21 @@
+.offcanvas-custom {
+  background-color: #f8f9fa;
+  border-left: 1px solid #dee2e6;
+}
+
+.google-map {
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.offcanvas-wide {
+  width: 90vw; /* Set width to 90% of the viewport */
+  max-width: none; /* Remove max-width restriction */
+}
+
+/* Optional: Override Bootstrap's default width for larger screens */
+@media (min-width: 992px) {
+  .offcanvas-wide {
+    width: 90vw;
+  }
+}

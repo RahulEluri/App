@@ -1,0 +1,57 @@
+<div class="container mt-3">
+  <google-map height="500px" width="100%" [center]="center" [zoom]="zoom">
+    <map-marker
+      *ngFor="let location of locations"
+      [position]="{ lat: location.lat, lng: location.lng }"
+      [icon]="getMarkerIcon(location)"
+      (mapClick)="openOffCanvas(location)"
+    >
+    </map-marker>
+  </google-map>
+</div>
+
+<!-- Bootstrap Offcanvas -->
+<div
+  #offcanvasElement
+  class="offcanvas offcanvas-end offcanvas-wide"
+  tabindex="-1"
+>
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">{{ selectedLocation?.label }}</h5>
+    <button
+      type="button"
+      class="btn-close"
+      data-bs-dismiss="offcanvas"
+      aria-label="Close"
+    ></button>
+  </div>
+  <div class="offcanvas-body" style="height: 100vh">
+    <div>
+      <label for="metricSelect">Select Metric:</label>
+      <select
+        id="metricSelect"
+        class="form-control mb-3"
+        [(ngModel)]="selectedMetric"
+        (change)="updateGraphData()"
+      >
+        <option *ngFor="let metric of metrics" [value]="metric">
+          {{ metric }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Line Chart -->
+    <ngx-charts-line-chart
+      [view]="view"
+      [results]="graphData"
+      [xAxis]="true"
+      [yAxis]="true"
+      [showXAxisLabel]="true"
+      [showYAxisLabel]="true"
+      xAxisLabel="Date"
+      yAxisLabel="{{ selectedMetric }}"
+      [autoScale]="true"
+    >
+    </ngx-charts-line-chart>
+  </div>
+</div>
