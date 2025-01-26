@@ -68,16 +68,26 @@ export class MapComponent implements OnInit {
       }
 
       const location = groupedLocations.get(key);
-      location.metrics.push({
+
+      // Safely parse and add metrics
+      const parsedMetrics = {
         date: new Date(row.Date),
-        FM: +row.FM,
-        cf1: +row.cf1,
-        TempC: +row.TempC,
-        RH: +row.RH,
-      });
+        FM: this.safeParseNumber(row.FM),
+        cf1: this.safeParseNumber(row.cf1),
+        TempC: this.safeParseNumber(row.TempC),
+        RH: this.safeParseNumber(row.RH),
+      };
+
+      location.metrics.push(parsedMetrics);
     });
 
     this.locations = Array.from(groupedLocations.values());
+  }
+
+  // Utility to safely parse numbers
+  safeParseNumber(value: any): number {
+    const parsed = parseFloat(value);
+    return isNaN(parsed) ? 0 : parsed; // Default to 0 if parsing fails
   }
 
   openOffCanvas(location: any): void {
@@ -92,19 +102,68 @@ export class MapComponent implements OnInit {
     }
   }
 
+  openOffCanvasByRegion(region: string): void {
+    const location = this.locations.find(
+      (loc) => loc.label.toLowerCase() === region.toLowerCase()
+    );
+    if (location) {
+      this.openOffCanvas(location);
+    } else {
+      console.warn(`Region ${region} not found.`);
+    }
+  }
+
   updateGraphData(): void {
     if (!this.selectedLocation || !this.selectedMetric) {
       this.graphData = [];
       return;
     }
 
+    // Group metrics by month
+    const monthlyData = this.selectedLocation.metrics.reduce(
+      (acc: any, metric: any) => {
+        const monthKey = `${metric.date.getFullYear()}-${
+          metric.date.getMonth() + 1
+        }`;
+        if (!acc[monthKey]) {
+          acc[monthKey] = { total: 0, count: 0 };
+        }
+
+        const value = metric[this.selectedMetric];
+
+        // Only include valid numbers
+        if (value !== undefined && !isNaN(value)) {
+          acc[monthKey].total += value;
+          acc[monthKey].count += 1;
+        }
+
+        return acc;
+      },
+      {}
+    );
+
+    // Calculate the average for each month
+    const averagedData = Object.entries(monthlyData).map(
+      ([key, value]: [string, any]) => {
+        const [year, month] = key.split('-');
+        return {
+          name: `${year}-${month.padStart(2, '0')}`, // Format as YYYY-MM
+          value: value.count > 0 ? value.total / value.count : 0, // Avoid division by zero
+        };
+      }
+    );
+
+    // Sort data by date (optional)
+    averagedData.sort(
+      (a: any, b: any) =>
+        new Date(a.name).getTime() - new Date(b.name).getTime()
+    );
+
+    // Update graph data
     this.graphData = [
       {
         name: this.selectedMetric,
-        series: this.selectedLocation.metrics.map((metric: any) => ({
-          name: metric.date.toLocaleDateString(),
-          value: metric[this.selectedMetric],
-        })),
+        series: averagedData,
       },
     ];
   }
